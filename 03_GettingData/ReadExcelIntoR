@@ -1,0 +1,373 @@
+source: https://www.datacamp.com/community/tutorials/r-tutorial-read-excel-into-r
+
+Back to DataCamp HomeTutorialsOpen CoursesBlogSign inCreate Free Account
+R Tutorial on Reading and Importing Excel Files into R
+April 3rd, 2015  5 likes  R Programming Importing & Cleaning Data
+Placeholder avatarThe DataCamp Team
+Why an R Tutorial on Reading and Importing Excel Files into R is necessary
+As most of you know, Excel is a spreadsheet application developed by Microsoft. It is an easy accessible tool for organizing, analyzing and storing data in tables and has a widespread use in many different application fields all over the world. It doesn't need to surprise that R has implemented some ways to read, write and manipulate Excel files (and spreadsheets in general). This tutorial on reading and importing Excel files into R will give an overview of some of the options that exist to import Excel files and spreadsheets of different extensions to R. Both basic commands in R and dedicated packages are covered. At the same time, some of the most common problems that you can face when loading Excel files and spreadsheets into R will be addressed. Want more R tutorials? Check out DataCamp!Importing excel into R (Spotted a mistake? Send a note to martijn@datacamp.com.)
+
+Step One. Your Data
+What this tutorial eventually comes down to is data: you want to import it fast and easily to R. As a first step, it is therefore a good idea to have a data set on your personal computer. There are basically two options to do this: either you have a dataset of your own or you download one from the Internet. The following blog post, written by Joseph Rickert of Revolution Analytics, can be a useful help when you're not sure where to find data on the Internet. Another option is Quandl, a search engine for numerical data. It offers millions of free and open financial, economic, and social datasets and might prove to be an easier option, especially for beginners who are not yet familiar with the field of data analysis. You can check out and use Quandl here.
+
+Tip if you are a beginning R programmer, you can go through our tutorial, which not only explains how to import and manipulate Quandl data sets, but also provides you with exercises to slowly submerge you into Quandl.
+
+Step Two. Prepping Your Data Set
+Best Practices
+Before you start thinking about how to load your Excel files and spreadsheets into R, you need to first make sure that your data is well prepared to be imported. If you would neglect to do this, you might experience problems when using the R functions that will be described in Step Three. Here's a list of some best practices to help you to avoid any issues with reading your Excel files and spreadsheets into R:
+
+The first row of the spreadsheet is usually reserved for the header, while the first column is used to identify the sampling unit;
+Avoid names, values or fields with blank spaces, otherwise each word will be interpreted as a separate variable, resulting in errors that are related to the number of elements per line in your data set;
+If you want to concatenate words, do this by inserting a .. For example:
+ 
+Sepal.Length
+Short names are prefered over longer names;
+Try to avoid using names that contain symbols such as ?, $,%, ^, &, *, (, ),-,#, ?,,,<,>, /, |, \, [ ,] ,{, and };
+Delete any comments that you have made in your Excel file to avoid extra columns or NA's to be added to your file; and
+Make sure that any missing values in your data set are indicated with NA.
+ 
+Saving Your Data
+Make sure that your data is saved. This allows you to revisit the data later to edit, to add more data or to changing them, preserving the formulas that you maybe used to calculate the data, etc. For example, Microsoft Excel offers many options to save your file: besides the default extension .xls or .xlsx, you can go to the File tab, click on “Save As” and select one of the extensions that are listed as the “Save as Type” options. The most common extensions to save datasets are .csv and .txt(as tab-delimited text file). Depending on the saving option that you choose, your data set's fields are separated by tabs or commas. These symbols are then called the “field separator characters” of your data set.
+
+Step Three. Preparatory Work In R
+Once you have your spreadsheet saved, you still need to set your working directory in R. To do this, try to find out first where your working directory is set at this moment:
+
+getwd()
+Then, it could be that you want to change the path that is returned in such a way that it includes the folder where you have stored your dataset:
+
+setwd("<location of your dataset>")
+By executing this command, R now knows exactly in which folder you're working.
+
+Step Four. Loading your Spreadsheets And Files Into R
+After saving your data set and adjusting your workspace, you can finally start importing your file into R! This can happen in two ways: either through basic R commands or through packages.
+
+Basic R Commands
+The following commands are all part of R's Utils package, which is one of the core and built-in packages that contains a collection of utility functions. You will see that these basic functions focus on getting spreadsheets into R, rather than the Excel files themselves. If you are more interested in the latter, scroll just a bit further down to discover the packages that are specifically designed for this purpose.
+
+read.table()
+As described in Step Two, one option for saving your data sets is the tab-delimited text file or *.txt file. If your data is saved as such, you can use one of the easiest and most general options to import your file to R: the read.table() function.
+
+df <- read.table("<FileName>.txt",
+                 header = TRUE)
+You fill in the first argument of the read.table() function with the name of your text file in between "" and its extension, while you specify in the second argument header if your text file has names in the first line or top row. The TRUE value for the header argument is the default.Remember that by executing setwd() R knows in which folder you're working. This means that you can just write the file's name as an argument of the read.table() function without specifying the file's location.Note that the field separator character for this function is set to "" or white space because it is meant to work for tab-delimited .txt files, which separate fields based on tabs. Indeed, white spaces here indicate not only one or more spaces, but also tabs, newlines or carriage returns. If your file uses another symbol to separate the fields of your data set, indicate this by adding the sep argument to the read.table() function:
+
+df <- read.table("<FileName>.txt",
+                 header = FALSE,
+                 sep="/",
+                 strip.white = TRUE,
+                 na.strings = "EMPTY")
+The strip.white argument allows you to indicate whether you want the white spaces from unquoted character fields stripped. It is only used when sep has been specified and only takes on a logical value. The na.strings indicates which strings should be interpreted as NA values. In this case, the string “EMPTY” is to be interpreted as an NA value. For example, you might use the function from above on a data set that looks like the following:
+
+ // Contents of .txt
+
+1/6/12:01:03/0.50/WORST
+2/16/07:42:51/0.32/ BEST
+3/19/12:01:29/0.50/"EMPTY"
+4/13/03:22:50/0.14/INTERMEDIATE
+5/8/09:30:03/0.40/WORST
+Which would result in:
+
+V1 V2      V3   V4           V5
+1  6 12:01:03 0.50        WORST
+2 16 07:42:51 0.32         BEST
+3 19 12:01:29 0.50         <NA>
+4 13 03:22:50 0.14 INTERMEDIATE
+5  8 09:30:03 0.40        WORST
+You see the extra white space before the class BEST in the second row has been removed, that the columns are perfectly separated thanks to the denomination of the sep argument and that the empty value, denoted with “EMPTY” in row three was replaced with NA. The decimal point did not cause any problems, since “.” is the default for read.table(). Lastly, since your data set did not have a header, R has provided some attributes for it, namely “V1”, “V2”, “V3”, “V4” and “V5”.
+
+Special Cases of read.table()
+The following options are special cases of the versatile read.table() function. This means that any arguments that are used in this function can be applied in all the functions that are described in this section, and vice versa. The variants are almost identical to read.table() and differ from it in three aspects only:
+
+The separator symbol;
+The header argument is always set at TRUE, which indicates that the first line of the file being read contains the header with the variable names;
+The fill argument is also set as TRUE, which means that if rows have unequal length, blank fields will be added implicitly.
+ 
+Tip for a full overview of all possible arguments that can be used in all four functions, visit the Rdocumentation page.
+
+read.csv() and read.csv2()
+The read.csv() and read.csv2() functions are frequently used to read spreadsheets saved with the extension .csv or Comma Separated Values. As described before, read.csv() and read.csv2() have another separator symbol: for the former this is a comma, whereas the latter uses a semicolon. Remember that both functions have the header and fill arguments set as TRUE by default.
+
+Tip find out what separator symbol is used in your .csv file by opening it in a text editor
+
+For example, this data set
+
+ // Contents of .csv
+
+1;6;12:01:03;0,50;WORST
+2;16;07:42:51;0,32;BEST
+3;19;12:01:29;0,50;BEST
+4;13;03:22:50;0,14;INTERMEDIATE
+5;8;09:30:03;0,40; WORST
+as well as this one are .csv files:
+
+ // Contents of .csv
+
+1,6,12:01:03,0.50,WORST
+2,16,07:42:51,0.32,BEST
+3,19,12:01:29,0.50,BEST
+4,13,03:22:50,0.14,INTERMEDIATE
+5,8,09:30:03,0.40,WORST
+To read .csv files that use a comma as separator symbol, you can use the read.csv() function. like this:
+
+df <- read.csv("<name and extension of your file>",
+               header = TRUE,
+               quote="\"",
+               stringsAsFactors= TRUE,
+               strip.white = TRUE)
+Note that the quote argument denotes whether your file uses a certain symbol as quotes: in the command above, you pass \" or the ASCII quotation mark (“) to the quote argument to make sure that R takes into account the symbol that is used to quote characters. This is especially handy for data sets that have values that look like the ones that appear in the fifth column of this example data set. You can clearly see that the double quotation mark has been used to quote the character values of the CLASS variable:
+
+// Contents of .csv
+
+ID,SCORE,TIME,DECIMAL TIME,CLASS
+1,6,12:01:03,0.50,"WORST"
+2,16,07:42:51,0.32,"BEST"
+3,19,12:01:29,0.50,"BEST"
+4,13,03:22:50,0.14,"INTERMEDIATE"
+5,8,09:30:03,0.40,"WORST"
+The stringsAsFactors argument allows you to specify whether strings should be converted to factors. The default value is set to FALSE. Remember that you don't have to type the file's location if you have specified your working directory in R. For files where fields are separated by a semicolon, you use the read.csv2() function:
+
+df <- read.csv2("<name and extension of your file>",
+                header = FALSE,
+                quote = "\"",
+                dec = ",",
+                row.names = c("M", "N", "O", "P", "Q"),
+                col.names= c("X", "Y", "Z", "A","B"),
+                fill = TRUE,
+                strip.white = TRUE,
+                stringsAsFactors=TRUE)
+Note that the dec argument allows you to specify the character for the decimal mark. Make sure to specify this for your file if necessary, otherwise your values will be interpreted as separate categorical variables! The col.names argument, completed with the c() function that concatenates column names in a vector, specifies the column names in the first row. This can be handy to use if your file doesn't have a header line, R will use the default variable names V1, V2, …, etc. col.names can override this default and assign variable names. Similarly, the argument row.names specifies the observation names in the first column of your data set. The command above would perfectly import the following data set:
+
+// Contents of .csv
+
+1;6;12:01:03;0,50;"WORST"
+2;16;07:42:51;0,32;"BEST"
+3;19;12:01:29;0,50
+4;13;03:22:50;0,14; INTERMEDIATE
+5;8;09:30:03;0,40;"WORST"
+And it would result in the following data frame:
+
+X  Y        Z    A            B
+M 1  6 12:01:03 0.50        WORST
+N 2 16 07:42:51 0.32         BEST
+O 3 19 12:01:29 0.50
+P 4 13 03:22:50 0.14 INTERMEDIATE
+Q 5  8 09:30:03 0.40        WORST
+You see that the columns and rows are given names through the col.names and row.names arguments, that all fields are clearly separated, with the third unequal row filled in with a blank field, thanks to fill = TRUE. The added white spaces of unquoted characters are removed, just as specified in the strip.white argument. Lastly, strings are imported as factors because of the "TRUE” value that was provided for stringsAsFactors argument.Note that the vector that you use to complete the row.names or col.names arguments needs to be of the same length of your dataset!
+
+read.delim() and read.delim2()
+Just like the read.csv() function, read.delim() and read.delim2() are variants of the read.table() function. They are also almost identical to the read.table() function, except for the fact that they assume that the first line that is being read in is a header with the attribute names, while they use a tab as a separator instead of a whitespace, comma or semicolon. They also have the fill argument set to TRUE, which means that blank field will be added to rows of unequal length. You can use read.delim() to import your data set in the following way, for example:
+
+df <- read.delim("<name and extension of your file>",
+                  header = FALSE,
+                  sep = "/",
+                  quote  "\"",
+                  dec = ".",
+                  row.names = c("O", "P", "Q"),
+                  fill = TRUE,
+                  strip.white = TRUE,
+                  stringsAsFactors = TRUE,
+                  na.strings = "EMPTY",
+                  as.is = 3,
+                  nrows = 5,
+                  skip = 2)
+This function uses a decimal point as the decimal mark, as in: 3.1415. The nrows argument specifies that only five rows should be read of the original data. Lastly, the as.is is used to suppress factor conversion for a subset of the variables in your data, if they weren't otherwise specified: just supply the argument with a vector of indices of the columns that you don't want to convert, like in the command above, or give in a logical vector with a length equal to the number of columns that are read. If the argument is TRUE, factor conversion is suppressed everywhere.Remember that factors are variables that can only contain a limited number of different values. As such, they are often called categorical variables. For example, if you use the function defined above on this data set:
+
+// Contents
+
+1/6/12:01:03/0.50/"WORST"
+2/16/07:42:51/0.32/"BEST"
+3/19/12:01:29/0.50
+4/13/03:22:50/0.14/ INTERMEDIATE
+5/8/09:30:03/0.40/ WORST
+You will get the following result:
+
+  V1 V2       V3   V4           V5
+O  3 19 12:01:29 0.50
+P  4 13 03:22:50 0.14 INTERMEDIATE
+Q  5  8 09:30:03 0.40        WORST
+As the read.delim() is set to deal with decimal points, you can already suspect that there is another way to deal with files that have decimal commas. The slightly different function read.delim2() can be used for those files:
+
+df <- read.delim2("<name and extension of your file>",
+                  header = FALSE,
+                  sep = "\t",
+                  quote  "\"",
+                  dec = ".",
+                  row.names = c("M", "N", "O"),
+                  col.names= c("X", "Y", "Z", "A","B"),
+                  colClasses = (rep("integer",2),
+                                "date",
+                                "numeric",
+                                "character")
+                  fill = TRUE,
+                  strip.white = TRUE,
+                  na.strings = "EMPTY",
+                  skip = 2)
+Note that the read.delim2() function uses a decimal comma as the decimal mark. An example of the use of a decimal comma is 3,1415.
+
+Tip for more interesting information on the decimal mark usage, illustrated with a googleVis visualization, read our post.
+
+In the function above, the skip argument specifies that the first two rows of the dataset are not read into R. Secondly, colClasses allows you to specify a vector of classes for all columns of your data set. In this case, the data set has give columns, with the first two of type integer, replicating the class “integer” twice, the second of “date”, the third of “numeric” and lastly, the fourth of “character”. The replication of the integer type for the two first columns is indicated by the rep argument. Also, the separator has been defined as "\t", an escape code that designates the horizontal tab. For a data set such as the following, the read.delim2() function that was defined above could be applied:
+
+// Contents
+
+ID  SCORE  TIME DECIMAL   TIME CLASS
+1   6   12:01:03    0.50    WORST
+2   16  07:42:51    0.32    BEST
+3   19  12:01:29    0.50
+4   13  03:22:50    0.14    "EMPTY"
+5   8   09:30:03    0.40    WORST
+However, you might get an error when you try to force the third column to be read in as a date. It will look like this:
+
+Error in methods::as(data[[i]], colClasses[i]) :
+  no method or default for coercing "character" to "date"
+In other words, when executing the above read.delim2() function, the time attribute is interpreted to be of the type character, which can not be converted to “date”. The reason of this interpretation is probably due to the fact that the date wasn't defined as it should have been: only hours, minutes and seconds are given in this data set. On top of that, they're given in a special format that isn't recognized as standard. This is why you can first better read it in as a character, by replacing “date” by “character” in the colClasses argument, and then run the following command:
+
+df$Z <- as.POSIXct(df$Z,format="%H:%M:%S")
+Note that the as.POSIXct() function allows you to specify your own format, in cases where you decided to use a specific time and date notation, just like in the data set above. Your final result will be the following:
+
+X  Y        Z    A            B
+M 3 19 12:01:29 0.50
+N 4 13 03:22:50 0.14 INTERMEDIATE
+O 5  8 09:30:03 0.40        WORST
+while your data types, retrieved by executing str(df), will be
+
+'data.frame':  3 obs. of  5 variables:
+ $ X: int  3 4 5
+ $ Y: int  19 13 8
+ $ Z: POSIXct, format: "2015-04-02 12:01:29" "2015-04-02 03:22:50" "2015-04-02 09:30:03"
+ $ A: num  0.5 0.14 0.4
+ $ B: chr  "" "INTERMEDIATE" "WORST"
+Packages
+Not only can you import files through basic R commands, but you can also do this by loading in packages and then using the packages' functions.
+
+Further Workspace Prepping
+Remember that, if you do want to follow this approach, you need to install your packages. You can simply put the following:
+
+install.packages("<name of the package>")
+When you have gone through the installation, you can just type in the following to activate the package into your workspace:
+
+library("<name of the package>")
+To check if you already installed the package or not, type in
+
+any(grepl("<name of your package>",
+          installed.packages()))
+Putting The Packages into Action
+XLConnect
+XLConnect is a “comprehensive and cross-platform R package for manipulating Microsoft Excel files from within R”. You can make use of functions to create Excel workbooks, with multiple sheets if desired, and import data to them. Read in existing Excel files into R through:
+
+df <- readWorksheetFromFile("<file name and extension>",
+                            sheet=1,
+                            startRow = 4,
+                            endCol = 2)
+The sheet argument specifies which sheet you exactly want to import into R. You can also add more specifications, such as startRow or startCol to indicate from which row or column the data set should be imported, or endRow or endCol to indicate the point up until where you want the data to be read in. Alternatively, the argument region allows you to specify a range, like A5:B5 to indicate starting and ending rows and columns. Alternatively, you can also load in a whole workbook with the loadWorkbook() function, to then read in worksheets that you desire to appear as data frames in R through readWorksheet():
+
+wb <- loadWorkbook("<name and extension of your file>")
+df <- readWorksheet(wb, sheet=1)
+sheet is not the only argument that you can pass to readWorksheet(). If you want more information about the package or about all the arguments that you can pass to the readWorkSheetFromFile() function or to the two alternative functions that were mentioned, you can visit the package's RDocumentation page.
+
+xlsx Package
+This is a second package that you can use to load in Excel files in R. The function to read in the files is just the same as the basic read.table() or its variants:
+
+df <- read.xlsx("<name and extension of your file>",
+                sheetIndex = 1)
+Note that it is necessary to add a sheet name or a sheet index to this function. In the example above, the first sheet of the Excel file was assigned. If you have a bigger data set, you might get better performance when using the read.xlsx2() function:
+
+df <- read.xlsx2("<name and extension of your file>",
+                 sheetIndex = 1,
+                 startRow=2,
+                 colIndex = 2)
+According to the package information, the function achieves a performance of an order of magnitude faster on sheets with 100,000 cells or more. This is because this function does more work in Java.Note that the command above is the exact same that you can use in the readWorkSheetFromFile() from the XLConnect package and that it specifies that you start reading the data set from the second row onwards. Additionally, you might want to specify the endRow, or you can limit yourself to colIndex and rowIndex to indicate the rows and columns you want to extract. Just like XLConnect, the xlsx package can do a lot more than just reading data: it can also be used to write data frames to Excel workbooks and to manipulate the data further into those files. If you would also like to write a data frame to an Excel workbook, you can just use write.xlsx() and write.xlsx2(). For example:
+
+write.xlsx(df,
+           "df.xlsx",
+           sheetName="Data Frame")
+The function requires you first to specify what data frame you want to export. In the second argument, you specify the name of the file that you are outputting. If, however, you want to write the data frame to a file that already exists, you can execute the following command:
+
+write.xlsx(df,
+           "<name and extension of your existing file>",
+           sheetName="Data Frame"
+           append=TRUE)
+Note that, in addition to changing the name of the output file, you also add the argument append to indicate that the data frame sheet should be added to the given file. For more details on this package and its functions, go to this page.
+
+gdata Package
+This package provides another cross-platform solution to load in Excel files into R. It contains various tools for data manipulation, among which the read.xls() function, which is used as follows:
+
+df <- read.xls("<name of your file.xls>",
+               perl="<location of perl.exe file on your pc")
+The read.xls() function translates the named Excel File into a temporary .csv or .tab file, making use of Perl in the process. Perl is a programming language and stands for “Practical Extraction and Report Language”. It comes standard on Linux and MAC OS X. If you are using Windows and you do not have it installed on your computer, you can download ActiveState Perl here. For more information on how to fill in the perl argument, visit this page.Note that you don't need to know how to use Perl, you just need to be able to retrieve its location on your computer! Even though the function seems to explicitly target older versions of Excel spreadsheets by the reference to .xls, but it also accepts .xlsx files as input.Note that you actually need to specify the exact Perl path in the perl argument to execute this command without prompting any errors, only if the working version of Perl is not in the executable search path. In other words, when the read.xls() funtion is executed, R searches the path to the Excel file and hopes to find Perl on its way. If this is not the case, R will return an error. A possible completion of the perlargument can look like this, for example:
+
+df <- read.xls("iris.xls",
+               sheet=1,
+               perl="C:/Perl/bin/perl.exe")
+This package also offers other functions, such as xls2sep() and its wrappers xls2csv(), xls2tab() and xls2tsv() to return temporary files in .csv, .tab, .tsv files or any other specified format, respectively. These functions work exactly the same as read.xls():
+
+df <- xls2csv("<name of your file>.xls",
+              sheet = 1,
+              na.strings = "EMPTY",
+              perl="<location of Perl>")
+The output of this function, df, will contain the temporary .csv file of the first sheet of the .xls or .xlsx file with stringS “EMPTY” defined as NA values. You can subsequently read in this temporary file with any of the previous functions that is fit to read in files with the .csv extension, like read.csv():
+
+df <- read.csv(df)
+Note that any additional arguments for read.xls(), xls2sep() and its wrappers are the same as the ones that you use for read.table(). The defaults of these arguments as set as the ones for read.csv(): the header and fill arguments set as TRUE by default and the separator symbol is “,”. If you want to make sure which file formats are supported by the read.xls() function, you can use the xlsFormats() function:
+
+xlsFormats(perl="<location of Perl>")
+Step Five. Final Checkup
+After executing the command to read in the file in which your data set is stored, you might want to check one last time to see if you imported the file correctly. Type in the following command to check the attributes' data types of your data set:
+
+str("<name of the variable in which you stored your data>")
+Like for example:
+
+str(df)
+Or type in
+
+head("<name of the variable in which you stored your data>")
+By executing this command, you will get to see the first rows of your data frame. This will allow you to check if the data set's fields were correctly separated, if you didn't forget to specify or indicate the header, etc.
+
+Step Six. There And Back Again
+Importing your files is only one small but essential step in your endeavours with R. From this point, you are ready to start analyzing, manipulating or visualizing the imported data. Do you want to continue already and get started with the data of your newly imported Excel file? Check out our tuturials for beginners on histograms and machine learning.
+
+What did you think? 
+inShare
+4
+Get Access To All Courses
+Join now and become a full-fledged Data Scientist!
+
+Join Now
+Check Out Intermediate R
+Intermediate R Start Course
+Up Next
+The importance of preprocessing in data science and the machine learning pipeline III: scaling your data to combat noise
+May 9th, 2016  6 likes by Hugo Bowne-Anderson
+In two previous posts, I explored the role of preprocessing data in the machine learning pipeline. In particular, I checked out the k-Nearest Neighbors (k-NN) and logistic regression algorithms and saw how scaling numerical data strongly influenced the performance of the former but not that of the latter, as measured... Read More
+
+The importance of preprocessing in data science and the machine learning pipeline II: centering, scaling and logistic regression
+May 2nd, 2016  5 likes by Hugo Bowne-Anderson
+In the first article in this series, I explored the role of preprocessing in machine learning (ML) classification tasks, with a deep dive into the k-Nearest Neighbours algorithm (k-NN) and the wine quality dataset. There you saw that centering and scaling numerical data improved the performance of k-NN for a... Read More
+
+View All
+Comments
+
+arunbiotechnologist
+Hai!
+How to read the data from the second, third,.... sheets of a .csv file?
+02/11/16 9:09 AM |
+Sign In to Comment
+Create free account
+Sign-in
+View all Courses
+DataCamp for Groups
+Community
+Become a Teacher
+Contact Us
+support@datacamp.com
+USA
+25 First St #303
+Cambridge MA 02141
+Belgium
+Kapeldreef 60
+3001 Leuven, Belgium
+Give us feedback
+
+Request a feature, suggest a course or topic, etc.
+ Submit
+DataCampR FiddleRDocumentationAboutTerms of UsePrivacy Policy    
